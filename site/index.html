@@ -1,0 +1,859 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Compare AI model benchmark scores against their release dates.">
+  <title>AI Model Timeline · aihci.org</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f8f7f3;
+      --surface: #fdfcf9;
+      --ink: #23201c;
+      --muted-ink: #645d54;
+      --line: #ded9d0;
+      --faint-line: #e9e5dd;
+      --hover: #f2efe8;
+      --brand: #ad452d;
+      --sample-bg: #f2e6dd;
+      --sample-ink: #903c2a;
+      --sans: "DM Sans", "Segoe UI", sans-serif;
+      --serif: "Instrument Serif", Georgia, serif;
+      --mono: "IBM Plex Mono", Consolas, monospace;
+      --gutter: clamp(20px, 4.1vw, 64px);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font: 400 15px/1.5 var(--sans); }
+    button, select { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; }
+    button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visible, input:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
+    [hidden] { display: none !important; }
+
+    .shell { width: min(1240px, calc(100% - 2 * var(--gutter))); margin-inline: auto; }
+    .mono-label { font: 500 11px/1.4 var(--mono); letter-spacing: .075em; text-transform: uppercase; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+    .topbar { border-bottom: 1px solid var(--line); }
+    .topbar .shell { min-height: 65px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-size: 23px; font-weight: 700; letter-spacing: -.055em; }
+    .brand em { color: var(--brand); font-style: normal; }
+    .brand-mark { position: relative; width: 27px; height: 27px; border-radius: 7px; background: #ad452d; }
+    .brand-mark::before { content: ""; position: absolute; inset: 6px auto 6px 8px; width: 1px; background: #f9e6db; opacity: .65; }
+    .brand-mark::after { content: ""; position: absolute; top: 6px; left: 6px; width: 5px; height: 5px; border-radius: 50%; background: #fff8ee; box-shadow: 10px 5px #fff8ee, 0 10px #fff8ee; }
+    .top-actions { display: flex; align-items: center; gap: 24px; }
+    .help, .text-button { display: inline-flex; align-items: center; gap: 7px; background: transparent; border: 0; padding: 4px 0; font-size: 13px; font-weight: 600; }
+    .help:hover, .text-button:hover, .top-link:hover { color: var(--brand); }
+    .help-icon { display: inline-grid; place-items: center; width: 15px; height: 15px; border: 1px solid currentColor; border-radius: 50%; font: 500 10px/1 var(--mono); }
+    .sample { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; background: var(--sample-bg); color: var(--sample-ink); border-radius: 4px; padding: 6px 9px; }
+    .sample::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+    .hero { padding: 39px 0 29px; }
+    .period { margin: 0 0 15px; color: var(--brand); }
+    h1 { margin: 0; font-size: clamp(48px, 6.1vw, 88px); font-weight: 700; line-height: .98; letter-spacing: -.081em; }
+    h1 em { margin-inline-start: .045em; color: var(--brand); font: italic 400 1.14em/.85 var(--serif); letter-spacing: -.04em; }
+    .lede { margin: 16px 0 0; color: var(--muted-ink); font-size: 17px; line-height: 1.55; }
+    .controls { display: grid; grid-template-columns: minmax(0, 232px) 1fr auto minmax(0, 290px) 137px; align-items: center; gap: 10px; padding: 15px 0; border-block: 1px solid var(--line); }
+    .year-select { grid-column: 3; }
+    .benchmark-select { grid-column: 4; }
+    .score-picker { grid-column: 5; }
+    .filter-picker { position: relative; min-width: 0; }
+    .filter-picker summary {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 7px 29px 7px 11px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: var(--surface);
+      font-size: 13px;
+      font-weight: 600;
+      list-style: none;
+      cursor: pointer;
+    }
+    .filter-picker summary::-webkit-details-marker { display: none; }
+    .filter-picker summary:hover { border-color: var(--muted-ink); }
+    .filter-picker[open] summary { border-color: var(--brand); }
+    .filter-picker[open] summary::after { top: 17px; transform: rotate(225deg); }
+    .picker-glyph {
+      flex: 0 0 11px;
+      width: 11px;
+      height: 10px;
+      background: linear-gradient(var(--brand), var(--brand)) left top / 11px 1.5px no-repeat,
+        linear-gradient(var(--brand), var(--brand)) left center / 8px 1.5px no-repeat,
+        linear-gradient(var(--brand), var(--brand)) left bottom / 5px 1.5px no-repeat;
+    }
+    .filter-summary { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .range-glyph { flex: 0 0 11px; height: 8px; border-inline: 1px solid var(--brand); background: linear-gradient(var(--brand), var(--brand)) center / 100% 1px no-repeat; }
+    .filter-panel {
+      position: absolute;
+      z-index: 5;
+      top: calc(100% + 6px);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: 0 10px 30px #17130f20;
+    }
+    .model-menu { left: 0; width: min(372px, calc(100vw - 2 * var(--gutter) - 16px)); padding: 12px 12px 7px; }
+    .score-menu { right: 0; width: min(254px, calc(100vw - 2 * var(--gutter) - 16px)); padding: 12px; }
+    .score-limits { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .score-limits label { display: grid; gap: 4px; color: var(--muted-ink); font-size: 12px; font-weight: 600; }
+    .score-limits input { width: 100%; }
+    .score-error { margin: 8px 0 0; color: var(--brand); font-size: 12px; }
+    .score-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; }
+    .apply-range { min-height: 34px; padding: 5px 13px; border: 1px solid var(--ink); border-radius: 5px; background: var(--ink); color: var(--paper); font-size: 13px; font-weight: 600; }
+    .apply-range:hover { opacity: .88; }
+    .model-menu-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .model-search { flex: 1; min-width: 0; }
+    .model-search, .score-limits input {
+      min-height: 36px;
+      padding: 6px 9px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: var(--paper);
+      color: var(--ink);
+      font: inherit;
+      font-size: 13px;
+    }
+    .model-search::placeholder, .score-limits input::placeholder { color: var(--muted-ink); }
+    #show-all-models { flex-shrink: 0; }
+    #show-all-models:disabled { cursor: default; color: var(--muted-ink); text-decoration: none; }
+    .model-families { min-inline-size: 0; padding: 0 0 9px; margin: 0; border: 0; }
+    .model-families legend, .model-list-label { color: var(--muted-ink); font-size: 11px; font-weight: 700; }
+    .family-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; margin-top: 4px; }
+    .model-option { display: flex; align-items: center; gap: 7px; min-height: 32px; border-radius: 4px; padding: 5px 6px; font-size: 13px; line-height: 1.25; cursor: pointer; }
+    .model-option:hover, .model-option:has(input:checked) { background: var(--hover); }
+    .model-option input { flex: 0 0 14px; width: 14px; height: 14px; margin: 0; accent-color: var(--brand); }
+    .model-family-option { font-size: 12px; font-weight: 600; }
+    .model-logo { flex: 0 0 auto; width: 16px; height: 16px; object-fit: contain; }
+    .model-list-label { padding: 9px 0 4px; border-top: 1px solid var(--faint-line); margin: 0; }
+    .model-options { max-height: 204px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-gutter: stable; }
+    .model-section h3 { margin: 8px 6px 2px; color: var(--muted-ink); font: 500 10px/1.35 var(--mono); text-transform: uppercase; letter-spacing: .06em; }
+    .model-search-empty { margin: 8px 6px; color: var(--muted-ink); font-size: 12px; }
+    .select-control { position: relative; }
+    .select-control::after, .filter-picker summary::after { content: ""; position: absolute; right: 13px; top: 15px; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); pointer-events: none; }
+    .select-control select { appearance: none; min-height: 38px; width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 5px; padding: 7px 29px 7px 11px; font-size: 13px; font-weight: 600; text-overflow: ellipsis; }
+    .benchmark-select select { padding-left: 29px; }
+    .benchmark-select::before { content: ""; position: absolute; top: 13px; left: 11px; width: 11px; height: 10px; border-bottom: 1px solid var(--brand); background: linear-gradient(var(--brand), var(--brand)) left bottom / 2px 4px no-repeat, linear-gradient(var(--brand), var(--brand)) center bottom / 2px 7px no-repeat, linear-gradient(var(--brand), var(--brand)) right bottom / 2px 10px no-repeat; pointer-events: none; }
+    .select-control select:hover { border-color: var(--muted-ink); }
+
+    .scatter {
+      margin: 19px 0 0;
+      padding: 20px 25px 13px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+    }
+    .chart-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 16px; }
+    .chart-heading h2 { margin: 0; font-size: 23px; letter-spacing: -.045em; line-height: 1.15; }
+    .chart-count { margin: 0; color: var(--muted-ink); font: 400 11px/1.5 var(--mono); text-align: right; }
+    .axis-label { display: block; color: var(--muted-ink); }
+    .y-label { margin: 0 0 12px; }
+    .x-label { margin: 17px 0 14px; text-align: center; }
+    .plot {
+      position: relative;
+      height: 350px;
+      margin: 0 9px 29px 57px;
+      isolation: isolate;
+    }
+    .score-band { position: absolute; top: var(--range-top); height: var(--range-height); inset-inline: 0; background: color-mix(in srgb, var(--brand) 8%, transparent); pointer-events: none; }
+    .grid-y, .grid-x { position: absolute; color: var(--muted-ink); font: 400 11px/1.35 var(--mono); }
+    .grid-y { top: var(--at); inset-inline: 0; border-top: 1px solid var(--faint-line); }
+    .grid-x { left: var(--at); inset-block: 0; border-left: 1px solid var(--faint-line); }
+    .axis-edge { border-color: var(--line); }
+    .tick-y { position: absolute; right: calc(100% + 12px); transform: translateY(-50%); white-space: nowrap; }
+    .tick-x { position: absolute; top: calc(100% + 9px); left: 0; transform: translateX(-50%); white-space: nowrap; }
+    .grid-x:first-child .tick-x { transform: none; }
+    .grid-x:last-child .tick-x { transform: translateX(-100%); }
+
+    .markers { position: absolute; inset: 0; pointer-events: none; }
+    .plot-dot {
+      --dot-color: var(--family-color);
+      position: absolute;
+      top: var(--y);
+      left: var(--x);
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      transform: translate(-50%, -50%);
+      pointer-events: auto;
+    }
+    .marker-logo {
+      display: grid;
+      place-items: center;
+      width: 16px;
+      height: 16px;
+      padding: 1px;
+      border-radius: 4px;
+      background: var(--surface);
+    }
+    .marker-logo .model-logo { width: 100%; height: 100%; }
+    .plot-dot[data-estimated] .marker-logo { outline: 1px dashed var(--dot-color); outline-offset: 1px; }
+    .plot-dot:focus-visible { z-index: 2; }
+    .plot-dot[data-hovered] { z-index: 3; }
+    .plot-dot:is([data-hovered], :focus-visible) .marker-logo {
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--dot-color) 20%, transparent);
+    }
+    .dot-tip {
+      position: absolute;
+      bottom: calc(100% + 2px);
+      left: 50%;
+      display: none;
+      width: max-content;
+      max-width: 170px;
+      padding: 6px 9px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: var(--surface);
+      box-shadow: 0 3px 7px #221f1c12;
+      text-align: left;
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+    .plot-dot[data-tip-align="start"] .dot-tip { transform: none; }
+    .plot-dot[data-tip-align="end"] .dot-tip { transform: translateX(-100%); }
+    .plot-dot[data-tip-below] .dot-tip { bottom: auto; top: calc(100% + 2px); }
+    .plot-dot:is([data-hovered], :focus-visible) .dot-tip { display: grid; gap: 1px; }
+    .dot-tip strong { font-size: 12px; line-height: 1.3; font-weight: 700; }
+    .dot-tip span { font: 400 10px/1.4 var(--mono); color: var(--muted-ink); }
+    .chart-note { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 5px 16px; margin: 0; padding-top: 11px; border-top: 1px solid var(--faint-line); color: var(--muted-ink); font-size: 12px; }
+    .chart-note a, dialog a { text-underline-offset: 3px; }
+    .estimate-key { display: inline-flex; align-items: center; gap: 6px; }
+    .estimate-key::before { content: ""; width: 8px; height: 8px; border: 1.5px dashed currentColor; border-radius: 2px; }
+    .chart-empty { position: absolute; inset: 0; display: grid; place-content: center; padding: 10px; text-align: center; }
+    .chart-empty h3 { margin: 0; font-size: 18px; }
+    .chart-empty p { margin: 4px 0 10px; color: var(--muted-ink); font-size: 13px; }
+    .empty-copy { background: var(--surface); border-radius: 6px; padding: 12px; }
+    .text-button { color: var(--brand); text-decoration: underline; text-underline-offset: 3px; }
+
+    .footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 25px; padding: 13px 0 25px; border-top: 1px solid var(--line); color: var(--muted-ink); font-size: 12px; }
+    .footer p { margin: 0; }
+    .top-link { white-space: nowrap; text-decoration: none; }
+
+    dialog { width: min(calc(100% - 32px), 490px); padding: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); box-shadow: 0 20px 90px #18150f33; }
+    dialog::backdrop { background: #211c1580; }
+    .dialog-inner { position: relative; padding: 28px; }
+    .dialog-close { position: absolute; top: 12px; right: 12px; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 1px solid var(--line); border-radius: 5px; background: transparent; font-size: 20px; line-height: 1; }
+    .dialog-close:hover { background: var(--hover); }
+    .dialog-kicker { margin: 0 0 10px; color: var(--brand); }
+    dialog h2 { margin: 0 36px 10px 0; font-size: 29px; line-height: 1.12; letter-spacing: -.045em; }
+    dialog p { margin: 0 0 14px; color: var(--muted-ink); font-size: 14px; }
+    dialog dl { margin: 19px 0 0; }
+    dialog dl div { display: grid; grid-template-columns: minmax(110px, 2fr) 3fr; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 13px; }
+    dialog dt { font-weight: 600; }
+    dialog dd { margin: 0; color: var(--muted-ink); overflow-wrap: anywhere; }
+
+    @media (max-width: 1000px) {
+      .hero { padding-top: 33px; }
+    }
+    @media (max-width: 780px) {
+      .controls { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.08fr) 137px; }
+      .year-select, .benchmark-select, .score-picker { grid-column: auto; }
+    }
+    @media (max-width: 595px) {
+      .topbar .shell { min-height: 56px; }
+      .top-actions { gap: 12px; }
+      .help-icon { display: none; }
+      .brand { gap: 7px; font-size: 20px; }
+      .brand-mark { transform: scale(.9); transform-origin: left center; margin-right: -3px; }
+      .hero { padding: 26px 0 22px; }
+      h1 { font-size: clamp(42px, 10.5vw, 60px); }
+      .period { margin-bottom: 12px; }
+      .lede { margin-top: 13px; font-size: 15px; }
+      .controls { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); padding-block: 12px; }
+      .model-menu { width: 100%; }
+      .family-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .scatter { margin-top: 13px; padding: 15px 11px 11px; }
+      .chart-heading { flex-wrap: wrap; gap: 4px 10px; margin-bottom: 13px; }
+      .chart-heading h2 { font-size: 19px; }
+      .chart-count { font-size: 10px; text-align: left; }
+      .plot { height: 300px; margin-inline: 44px 5px; }
+      .tick-y { right: calc(100% + 8px); }
+      .tick-y, .tick-x { font-size: 10px; }
+      .grid-x[data-minor] .tick-x { display: none; }
+      .x-label { margin-bottom: 12px; }
+      .marker-logo { width: 13px; height: 13px; }
+      .footer { margin-top: 16px; }
+    }
+    @media (max-width: 360px) {
+      .sample { font-size: 9px; padding: 5px 6px; gap: 4px; }
+      .help { font-size: 11px; }
+      .top-actions { gap: 8px; }
+    }
+  </style>
+</head>
+<body id="top">
+  <header class="topbar">
+    <div class="shell">
+      <a class="brand" href="#top" aria-label="aihci.org, back to top"><span class="brand-mark" aria-hidden="true"></span><span>aihci<em>.</em>org</span></a>
+      <div class="top-actions">
+        <button type="button" class="help" id="help"><span class="help-icon" aria-hidden="true">?</span>How to read</button>
+        <span class="sample mono-label">Local snapshot</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <header class="hero">
+      <p class="period mono-label">Nov 2023 — Nov 2026</p>
+      <h1>AI model <em>timeline.</em></h1>
+      <p class="lede">Compare model scores against their release dates.</p>
+    </header>
+
+    <section aria-label="Model performance timeline">
+      <div class="controls" id="controls">
+        <details class="filter-picker model-picker" id="model-picker">
+          <summary id="model-trigger"><span class="picker-glyph" aria-hidden="true"></span><span class="sr-only">Model selection: </span><span class="filter-summary" id="model-summary">All models</span></summary>
+          <div class="filter-panel model-menu">
+            <div class="model-menu-top">
+              <input class="model-search" id="model-search" type="search" placeholder="Search models…" aria-label="Search model versions" autocomplete="off">
+              <button class="text-button" type="button" id="show-all-models">Show all</button>
+            </div>
+            <fieldset class="model-families">
+              <legend>Families</legend>
+              <div class="family-options" id="family-options"></div>
+            </fieldset>
+            <p class="model-list-label" id="model-list-label">Model versions</p>
+            <div class="model-options" id="model-options" role="group" aria-labelledby="model-list-label"></div>
+            <p class="model-search-empty" id="model-search-empty" role="status" hidden>No models match your search.</p>
+          </div>
+        </details>
+        <label class="select-control year-select">
+          <span class="sr-only">Release year</span>
+          <select id="year">
+            <option value="all">All years</option>
+            <option value="2026">2026</option>
+            <option value="2025">2025</option>
+            <option value="2024">2024</option>
+            <option value="2023">2023</option>
+          </select>
+        </label>
+        <label class="select-control benchmark-select">
+          <span class="sr-only">Benchmark</span>
+          <select id="benchmark"></select>
+        </label>
+        <details class="filter-picker score-picker" id="score-picker">
+          <summary id="score-trigger"><span class="range-glyph" aria-hidden="true"></span><span class="sr-only">Score range: </span><span class="filter-summary" id="score-summary">All scores</span></summary>
+          <form class="filter-panel score-menu" id="score-form" novalidate>
+            <div class="score-limits">
+              <label>Minimum<input id="score-min" type="number" step="any" inputmode="decimal" aria-describedby="score-error"></label>
+              <label>Maximum<input id="score-max" type="number" step="any" inputmode="decimal" aria-describedby="score-error"></label>
+            </div>
+            <p class="score-error" id="score-error" role="alert" hidden></p>
+            <div class="score-actions">
+              <button class="text-button" id="score-reset" type="button">Reset</button>
+              <button class="apply-range" type="submit">Apply</button>
+            </div>
+          </form>
+        </details>
+      </div>
+      <figure class="scatter" aria-labelledby="chart-title" aria-describedby="x-label y-label chart-note">
+        <div class="chart-heading">
+          <h2 id="chart-title">BenchLM · Overall</h2>
+          <p class="chart-count" id="chart-count" role="status"></p>
+        </div>
+        <p class="axis-label y-label mono-label" id="y-label">Score (pts)</p>
+        <div class="plot" id="plot">
+          <div class="score-band" id="score-band" aria-hidden="true" hidden></div>
+          <div id="grid-y" aria-hidden="true"></div>
+          <div id="grid-x" aria-hidden="true"></div>
+          <div class="markers" id="markers" role="group" aria-label="Scored model releases"></div>
+          <div class="chart-empty" id="chart-empty" hidden></div>
+          <noscript><p class="chart-empty">Enable JavaScript to explore the graph.</p></noscript>
+        </div>
+        <p class="axis-label x-label mono-label" id="x-label">Release date</p>
+        <figcaption class="chart-note" id="chart-note">
+          <span id="chart-source"></span>
+          <span class="estimate-key" id="estimate-key" hidden>Dashed outline · Estimated score</span>
+        </figcaption>
+      </figure>
+    </section>
+
+    <footer class="footer">
+      <p>Select a logo for the release source and score details.</p>
+      <a href="#top" class="top-link">Back to top ↑</a>
+    </footer>
+  </main>
+
+  <dialog id="details" aria-labelledby="dialog-title">
+    <div class="dialog-inner">
+      <form method="dialog"><button class="dialog-close" type="submit" aria-label="Close" autofocus>×</button></form>
+      <div id="dialog-content"></div>
+    </div>
+  </dialog>
+
+  <script src="timeline-data.local.js"></script>
+  <script>
+    // Raster marks from Lobe Icons 1.97.1, see logos/LICENSE.
+    const families = {
+      claude: { label: "Claude", color: "#ba553d", logo: "logos/claude.png" },
+      gpt: { label: "GPT", color: "#28765e", logo: "logos/gpt.png", monochrome: true },
+      gemini: { label: "Gemini", color: "#4d61b7", logo: "logos/gemini.png" },
+      grok: { label: "Grok", color: "#56535b", logo: "logos/grok.png", monochrome: true },
+      qwen: { label: "Qwen", color: "#8956af", logo: "logos/qwen.png" },
+      deepseek: { label: "DeepSeek", color: "#287b98", logo: "logos/deepseek.png" }
+    };
+
+    const timelineData = window.AIHCI_TIMELINE_DATA;
+    const { releases = [], benchmarks = {} } = timelineData ?? {};
+
+    const releaseWindowTicks = [
+      "2023-11-18", "2024-05-18", "2024-11-18", "2025-05-18", "2025-11-18", "2026-05-18", "2026-11-18"
+    ];
+
+    const selectedModels = new Set();
+    let scoreRange = null;
+    const modelGroups = Object.fromEntries(Object.keys(families).map(family => [family, new Map()]));
+    for (const release of releases) {
+      const group = modelGroups[release.family];
+      const key = modelKey(release);
+      if (!group.has(key)) group.set(key, release.name);
+    }
+    const monthName = new Intl.DateTimeFormat("en-US", { month: "short", timeZone: "UTC" });
+    const numberFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
+    const exactNumberFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 20 });
+    const shortDate = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+    const longDate = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+    const yearSelect = document.querySelector("#year");
+    const benchmarkSelect = document.querySelector("#benchmark");
+    const modelPicker = document.querySelector("#model-picker");
+    const modelTrigger = document.querySelector("#model-trigger");
+    const modelSummary = document.querySelector("#model-summary");
+    const modelSearch = document.querySelector("#model-search");
+    const familyOptions = document.querySelector("#family-options");
+    const modelOptions = document.querySelector("#model-options");
+    const showAllModels = document.querySelector("#show-all-models");
+    const scorePicker = document.querySelector("#score-picker");
+    const scoreForm = document.querySelector("#score-form");
+    const scoreTrigger = document.querySelector("#score-trigger");
+    const scoreSummary = document.querySelector("#score-summary");
+    const scoreMin = document.querySelector("#score-min");
+    const scoreMax = document.querySelector("#score-max");
+    const scoreError = document.querySelector("#score-error");
+    const scoreBand = document.querySelector("#score-band");
+    const plot = document.querySelector("#plot");
+    const dialog = document.querySelector("#details");
+
+    function formatDate(date, formatter = shortDate) {
+      return formatter.format(new Date(date + "T00:00:00Z"));
+    }
+
+    function formatMeasurement(score, benchmark, exact = false) {
+      const format = exact ? exactNumberFormat : numberFormat;
+      return format.format(score) + " " + benchmark.unit;
+    }
+
+    function escapeMarkup(value) {
+      const entities = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+      return String(value).replace(/[&<>"']/g, character => entities[character]);
+    }
+
+    function sourceLink(url, label) {
+      if (!/^https?:\/\//.test(url)) return escapeMarkup(label);
+      return `<a href="${escapeMarkup(url)}" target="_blank" rel="noopener noreferrer">${escapeMarkup(label)}</a>`;
+    }
+
+    function position(value, min, max) {
+      return 100 * (value - min) / (max - min);
+    }
+
+    function timeTicks(year) {
+      if (year === "all") return releaseWindowTicks;
+      const start = [releaseWindowTicks[0], year + "-01-01"].sort().at(-1);
+      const end = [releaseWindowTicks.at(-1), year + "-12-31"].sort()[0];
+      const milestones = year === "2023"
+        ? ["2023-12-09"]
+        : ["04-01", "07-01", "10-01"].map(day => year + "-" + day);
+      return [start, ...milestones, end];
+    }
+
+    function plotX(date, dates) {
+      return position(Date.parse(date), Date.parse(dates[0]), Date.parse(dates.at(-1)));
+    }
+
+    function plotY(score, benchmark) {
+      return 100 - position(score, benchmark.ticks[0], benchmark.ticks.at(-1));
+    }
+
+    function modelKey(release) {
+      return release.family + ":" + release.name.toLowerCase();
+    }
+
+    function logoMarkup(family) {
+      return `<img class="model-logo" src="${family.logo}" alt=""${family.monochrome ? " data-monochrome" : ""}>`;
+    }
+
+    function renderModelOptions() {
+      familyOptions.innerHTML = Object.entries(families).map(([key, family]) => `
+        <label class="model-option model-family-option">
+          <input type="checkbox" data-family-option="${key}">
+          ${logoMarkup(family)}<span>${family.label}</span>
+        </label>`).join("");
+
+      modelOptions.innerHTML = Object.entries(modelGroups).map(([family, models]) => {
+        const options = Array.from(models, ([key, name]) => `
+          <label class="model-option">
+            <input type="checkbox" data-model-option="${escapeMarkup(key)}">
+            <span>${escapeMarkup(name)}</span>
+          </label>`).join("");
+        return `
+          <section class="model-section" aria-labelledby="versions-${family}">
+            <h3 id="versions-${family}">${families[family].label}</h3>
+            ${options}
+          </section>`;
+      }).join("");
+      filterModelOptions();
+      syncModelSelection();
+    }
+
+    function filterModelOptions() {
+      const query = modelSearch.value.trim().toLowerCase().split(/\s+/);
+      let hasMatch = false;
+      for (const section of modelOptions.querySelectorAll(".model-section")) {
+        let sectionMatches = false;
+        for (const option of section.querySelectorAll(".model-option")) {
+          const input = option.querySelector("input");
+          option.hidden = !query.every(word => input.dataset.modelOption.includes(word));
+          sectionMatches ||= !option.hidden;
+        }
+        section.hidden = !sectionMatches;
+        hasMatch ||= sectionMatches;
+      }
+      document.querySelector("#model-search-empty").hidden = hasMatch;
+    }
+
+    function syncModelSelection() {
+      for (const input of modelOptions.querySelectorAll("[data-model-option]")) {
+        input.checked = selectedModels.has(input.dataset.modelOption);
+      }
+      for (const input of familyOptions.querySelectorAll("[data-family-option]")) {
+        const models = modelGroups[input.dataset.familyOption];
+        const selectedCount = Array.from(models.keys()).filter(key => selectedModels.has(key)).length;
+        input.disabled = models.size === 0;
+        input.checked = selectedCount > 0 && selectedCount === models.size;
+        input.indeterminate = selectedCount > 0 && selectedCount < models.size;
+      }
+      const count = selectedModels.size;
+      modelSummary.textContent = count ? `${count} model${count === 1 ? "" : "s"} selected` : "All models";
+      showAllModels.disabled = count === 0;
+    }
+
+    function clearModelSelection() {
+      selectedModels.clear();
+      modelSearch.value = "";
+      filterModelOptions();
+      syncModelSelection();
+    }
+
+    function scoreBounds() {
+      const { ticks } = benchmarks[benchmarkSelect.value];
+      return [ticks[0], ticks.at(-1)];
+    }
+
+    function syncScoreRange() {
+      const [low, high] = scoreBounds();
+      for (const input of [scoreMin, scoreMax]) {
+        input.min = low;
+        input.max = high;
+      }
+      scoreMin.placeholder = low;
+      scoreMax.placeholder = high;
+      scoreMin.value = scoreRange?.min ?? "";
+      scoreMax.value = scoreRange?.max ?? "";
+      scoreError.hidden = true;
+      const unit = benchmarks[benchmarkSelect.value].unit;
+      scoreSummary.textContent = scoreRange ? `${scoreRange.min}–${scoreRange.max} ${unit}` : "All scores";
+      scoreSummary.title = scoreSummary.textContent;
+    }
+
+    function applyScoreRange(range) {
+      scoreRange = range;
+      syncScoreRange();
+      scorePicker.open = false;
+      updateChart();
+      scoreTrigger.focus();
+    }
+
+    function renderControls() {
+      renderModelOptions();
+
+      const groups = new Map();
+      for (const [key, benchmark] of Object.entries(benchmarks)) {
+        if (!groups.has(benchmark.group)) {
+          const group = document.createElement("optgroup");
+          group.label = benchmark.group;
+          benchmarkSelect.append(group);
+          groups.set(benchmark.group, group);
+        }
+        groups.get(benchmark.group).append(new Option(benchmark.name, key));
+      }
+      syncScoreRange();
+    }
+
+    function renderAxes(dates, year, benchmark) {
+      document.querySelector("#y-label").textContent = `Score (${benchmark.unit})`;
+      document.querySelector("#grid-y").innerHTML = benchmark.ticks.map((tick, index) => {
+        const edge = index === 0 ? " axis-edge" : "";
+        return `<div class="grid-y${edge}" style="--at:${plotY(tick, benchmark)}%"><span class="tick-y">${numberFormat.format(tick)}</span></div>`;
+      }).join("");
+      document.querySelector("#grid-x").innerHTML = dates.map((date, index) => {
+        const label = year === "all" ? `${formatDate(date, monthName)} ’${date.slice(2, 4)}` : formatDate(date);
+        const edge = index === 0 ? " axis-edge" : "";
+        const minor = dates.length > 5 && index % 2 === 1 ? " data-minor" : "";
+        return `<div class="grid-x${edge}" style="--at:${plotX(date, dates)}%"${minor}><span class="tick-x">${label}</span></div>`;
+      }).join("");
+    }
+
+    function renderDot(entry, dates, benchmark) {
+      const { release, measurement } = entry;
+      const x = plotX(release.date, dates);
+      const y = plotY(measurement.value, benchmark);
+      const family = families[release.family];
+      const label = formatMeasurement(measurement.value, benchmark);
+      const estimated = measurement.evidence === "estimated";
+      const tipSide = x < 30 ? "start" : x > 70 ? "end" : "center";
+      return `
+        <button class="plot-dot" type="button" data-release="${escapeMarkup(release.id)}" aria-haspopup="dialog"
+          aria-label="${escapeMarkup(release.name)}, ${formatDate(release.date, longDate)}, ${label} in ${escapeMarkup(benchmark.name)}${estimated ? ", estimated" : ""}"
+          data-tip-align="${tipSide}"${y < 10 ? " data-tip-below" : ""}${estimated ? " data-estimated" : ""}
+          style="--family-color:${family.color};--x:${x}%;--y:${y}%">
+          <span class="marker-logo" aria-hidden="true">${logoMarkup(family)}</span>
+          <span class="dot-tip" aria-hidden="true"><strong>${escapeMarkup(release.name)}</strong><span>${formatDate(release.date)} · ${label}</span></span>
+        </button>`;
+    }
+
+    function nearestDot(clientX, clientY) {
+      let nearest = null;
+      let distance = 14;
+      for (const dot of plot.querySelectorAll(".plot-dot")) {
+        const box = dot.getBoundingClientRect();
+        const offset = Math.hypot(clientX - box.left - box.width / 2, clientY - box.top - box.height / 2);
+        if (offset < distance) {
+          nearest = dot;
+          distance = offset;
+        }
+      }
+      return nearest;
+    }
+
+    function showHover(dot) {
+      const previous = plot.querySelector("[data-hovered]");
+      if (previous === dot) return;
+      previous?.removeAttribute("data-hovered");
+      dot?.setAttribute("data-hovered", "");
+    }
+
+    function updateChart() {
+      const year = yearSelect.value;
+      const benchmarkKey = benchmarkSelect.value;
+      const benchmark = benchmarks[benchmarkKey];
+      const visible = releases.filter(release =>
+        (year === "all" || release.date.startsWith(year)) &&
+        (selectedModels.size === 0 || selectedModels.has(modelKey(release)))
+      );
+      const scored = visible.flatMap(release => {
+        const measurement = release.scores[benchmarkKey];
+        return measurement ? [{ release, measurement }] : [];
+      });
+
+      const plotted = scoreRange
+        ? scored.filter(({ measurement }) => measurement.value >= scoreRange.min && measurement.value <= scoreRange.max)
+        : scored;
+      const dates = timeTicks(year);
+      renderAxes(dates, year, benchmark);
+      scoreBand.hidden = !scoreRange;
+      if (scoreRange) {
+        const top = plotY(scoreRange.max, benchmark);
+        scoreBand.style.setProperty("--range-top", `${top}%`);
+        scoreBand.style.setProperty("--range-height", `${plotY(scoreRange.min, benchmark) - top}%`);
+      }
+      document.querySelector("#chart-title").textContent = benchmark.name;
+      document.querySelector("#chart-source").innerHTML =
+        `${sourceLink(benchmark.sourceUrl, benchmark.attribution)} · ${formatDate(benchmark.snapshot, longDate)} · ${escapeMarkup(benchmark.methodology)}`;
+      document.querySelector("#estimate-key").hidden = !plotted.some(entry => entry.measurement.evidence === "estimated");
+
+      const missing = visible.length - scored.length;
+      const outside = scored.length - plotted.length;
+      const counts = [`${plotted.length} plotted`];
+      if (outside) counts.push(`${outside} outside range`);
+      if (missing) counts.push(`${missing} unscored`);
+      document.querySelector("#chart-count").textContent = counts.join(" · ");
+      document.querySelector("#markers").innerHTML = [...plotted].reverse().map(entry =>
+        renderDot(entry, dates, benchmark)
+      ).join("");
+
+      const empty = document.querySelector("#chart-empty");
+      empty.hidden = plotted.length > 0;
+      if (!plotted.length) {
+        if (outside) {
+          empty.innerHTML = '<div class="empty-copy"><h3>No scores in this range</h3><button class="text-button" type="button" data-reset-range>Show all scores</button></div>';
+        } else {
+          const message = visible.length ? "No scores for this selection" : "No releases match";
+          empty.innerHTML = `<div class="empty-copy"><h3>${message}</h3>
+            <p>Change the benchmark or filters.</p><button class="text-button" type="button" data-reset>Clear filters</button></div>`;
+        }
+      }
+    }
+
+    function openDialog(content) {
+      document.querySelector("#dialog-content").innerHTML = content;
+      dialog.showModal();
+    }
+
+    function showRelease(release) {
+      const benchmarkKey = benchmarkSelect.value;
+      const benchmark = benchmarks[benchmarkKey];
+      const measurement = release.scores[benchmarkKey];
+      const score = formatMeasurement(measurement.value, benchmark, true);
+      const range = measurement.range
+        ? `<div><dt>90% conditional range</dt><dd>${numberFormat.format(measurement.range[0])}–${numberFormat.format(measurement.range[1])} pts</dd></div>`
+        : "";
+      const evidence = measurement.evidence
+        ? `<div><dt>Evidence</dt><dd>${escapeMarkup(measurement.evidence)}</dd></div>`
+        : "";
+      const evaluation = measurement.model ? `
+        <div><dt>Evaluated weights</dt><dd>${sourceLink(measurement.sourceUrl, measurement.model)} · ${escapeMarkup(measurement.precision)}</dd></div>
+        <div><dt>Submitted</dt><dd>${formatDate(measurement.submitted, longDate)}</dd></div>` : "";
+      const scoreSource = measurement.model ? benchmark.sourceUrl : measurement.sourceUrl;
+      openDialog(`
+        <p class="dialog-kicker mono-label">${escapeMarkup(release.kind)}</p>
+        <h2 id="dialog-title">${escapeMarkup(release.name)}</h2>
+        <dl>
+          <div><dt>Lab</dt><dd>${escapeMarkup(release.lab)}</dd></div>
+          <div><dt>Release date</dt><dd>${formatDate(release.date, longDate)}</dd></div>
+          <div><dt>Release source</dt><dd>${sourceLink(release.sourceUrl, "Official release record")}</dd></div>
+          <div><dt>${escapeMarkup(benchmark.name)}</dt><dd>${score}</dd></div>
+          <div><dt>Score snapshot</dt><dd>${formatDate(benchmark.snapshot, longDate)} · ${escapeMarkup(benchmark.methodology)}</dd></div>
+          ${evidence}${range}${evaluation}
+          <div><dt>Score source</dt><dd>${sourceLink(scoreSource, benchmark.attribution)}${benchmark.license ? " · " + sourceLink(benchmark.licenseUrl, benchmark.license) : ""}</dd></div>
+        </dl>`);
+    }
+
+    modelPicker.addEventListener("change", event => {
+      const { familyOption, modelOption } = event.target.dataset;
+      if (!familyOption && !modelOption) return;
+      const models = familyOption ? modelGroups[familyOption].keys() : [modelOption];
+      for (const key of models) {
+        if (event.target.checked) selectedModels.add(key);
+        else selectedModels.delete(key);
+      }
+      syncModelSelection();
+      updateChart();
+    });
+    modelSearch.addEventListener("input", filterModelOptions);
+    showAllModels.addEventListener("click", () => {
+      clearModelSelection();
+      updateChart();
+      modelSearch.focus();
+    });
+    const filterPickers = [modelPicker, scorePicker];
+    for (const picker of filterPickers) {
+      picker.addEventListener("keydown", event => {
+        if (event.key !== "Escape" || !picker.open) return;
+        event.preventDefault();
+        picker.open = false;
+        picker.querySelector("summary").focus();
+      });
+    }
+
+    function dismissFilterMenus(event) {
+      for (const picker of filterPickers) {
+        if (picker.open && !picker.contains(event.target)) picker.open = false;
+      }
+    }
+
+    document.addEventListener("pointerdown", dismissFilterMenus);
+    document.addEventListener("focusin", dismissFilterMenus);
+
+    scorePicker.addEventListener("toggle", () => {
+      if (scorePicker.open) syncScoreRange();
+    });
+    scoreForm.addEventListener("input", () => { scoreError.hidden = true; });
+    scoreForm.addEventListener("submit", event => {
+      event.preventDefault();
+      const [low, high] = scoreBounds();
+      const invalidInput = [scoreMin, scoreMax].find(input => !input.validity.valid);
+      const min = scoreMin.value === "" ? low : scoreMin.valueAsNumber;
+      const max = scoreMax.value === "" ? high : scoreMax.valueAsNumber;
+      if (invalidInput || min > max) {
+        scoreError.textContent = invalidInput
+          ? `Enter a score between ${low} and ${high}.`
+          : "Minimum must be at or below maximum.";
+        scoreError.hidden = false;
+        (invalidInput ?? scoreMax).focus();
+        return;
+      }
+      applyScoreRange(min === low && max === high ? null : { min, max });
+    });
+    document.querySelector("#score-reset").addEventListener("click", () => applyScoreRange(null));
+
+    yearSelect.addEventListener("change", updateChart);
+    benchmarkSelect.addEventListener("change", () => {
+      const [low, high] = scoreBounds();
+      if (scoreRange && (scoreRange.min < low || scoreRange.max > high)) scoreRange = null;
+      syncScoreRange();
+      updateChart();
+    });
+
+    plot.addEventListener("pointermove", event => {
+      if (event.pointerType !== "touch") showHover(nearestDot(event.clientX, event.clientY));
+    });
+    plot.addEventListener("pointerleave", () => showHover(null));
+
+    plot.addEventListener("click", event => {
+      const button = event.target.closest("[data-release], [data-reset], [data-reset-range]");
+      if (button?.hasAttribute("data-reset-range")) {
+        applyScoreRange(null);
+        return;
+      }
+      if (button?.hasAttribute("data-reset")) {
+        clearModelSelection();
+        scoreRange = null;
+        syncScoreRange();
+        yearSelect.value = "all";
+        updateChart();
+        modelTrigger.focus();
+        return;
+      }
+      const dot = event.detail > 0 ? nearestDot(event.clientX, event.clientY) ?? button : button;
+      if (dot) showRelease(releases.find(release => release.id === dot.dataset.release));
+    });
+
+    document.querySelector("#help").addEventListener("click", () => {
+      openDialog(`
+        <h2 id="dialog-title">How to read the chart</h2>
+        <dl>
+          <div><dt>Release date</dt><dd>The horizontal axis uses dates verified against official release records.</dd></div>
+          <div><dt>Benchmark score</dt><dd>The vertical axis uses the selected snapshot. Select a logo to see its release date and the separate score snapshot date.</dd></div>
+          <div><dt>Evidence</dt><dd>BenchLM marks some scores as estimated. A dashed outline around a model logo denotes an estimate. The details include any 90% conditional range supplied by BenchLM.</dd></div>
+        </dl>`);
+    });
+
+    dialog.addEventListener("click", event => {
+      if (event.target === dialog) dialog.close();
+    });
+
+    if (timelineData) {
+      renderControls();
+      updateChart();
+    } else {
+      document.querySelector("#controls").hidden = true;
+      document.querySelector("#chart-title").textContent = "Local data unavailable";
+      const empty = document.querySelector("#chart-empty");
+      empty.hidden = false;
+      empty.innerHTML = '<div class="empty-copy"><h3>Build the local chart data</h3><p><code>node scripts/build-timeline-data.mjs</code></p></div>';
+    }
+  </script>
+</body>
+</html>

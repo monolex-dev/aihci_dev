@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "kind": "arena_row",
+  "id": "arena:text_style_control:overall:2026-11-11:gemini-4-carbon-high",
+  "model_name": "Gemini 4 Carbon (High)",
+  "organization": "google",
+  "model_license": "Proprietary",
+  "score_kind": "bradley-terry",
+  "rating": 1526.1820374675945,
+  "rating_lower": 1516.5651633820812,
+  "rating_upper": 1535.7989115531077,
+  "variance": 24.07529834197266,
+  "vote_count": 4273,
+  "rank": 1,
+  "rank_scope": "dataset field rank for category overall on this publish date",
+  "category": "overall",
+  "compare_key": {
+    "config": "text_style_control",
+    "split": "latest",
+    "category": "overall",
+    "leaderboard_publish_date": "2026-11-11"
+  },
+  "source": {
+    "dataset": "lmarena-ai/leaderboard-dataset",
+    "dataset_url": "https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "LMArena leaderboard dataset (lmarena-ai/leaderboard-dataset), CC BY 4.0.",
+    "blog": "https://arena.ai/blog/arena-leaderboard-dataset",
+    "config": "text_style_control",
+    "split": "latest",
+    "leaderboard_publish_date": "2026-11-11",
+    "fetched_on": "2026-11-18",
+    "rows_api": "https://datasets-server.huggingface.co/rows?dataset=lmarena-ai/leaderboard-dataset&config=text_style_control&split=latest&offset=0&length=15"
+  }
+}

@@ -1,0 +1,16 @@
+# 이전 방향의 압축본. 커밋과 푸시에서 제외한다.
+/aihci-prior-direction-2026-11-17.zip
+
+# X 글 전문. 공개 저장소에 올리지 않는다.
+/data/x/private/**
+
+# BenchLM 컴파일 피드. CC BY-NC 4.0. 공개 원격에 재배포하지 않는다.
+/data/sources/benchlm/**/*.json
+
+# Open LLM Leaderboard 원본 스냅샷과 그래프용 로컬 데이터.
+/data/sources/open-llm-leaderboard/**/contents.jsonl
+/data/sources/open-llm-leaderboard/**/contents.parquet
+/site/timeline-data.local.js
+
+# NIIA 로컬 세션 기록.
+/.niia/session-order/
